@@ -47,6 +47,12 @@ class DataCleanerApp:
         self.drop_column_btn = tk.Button(self.options_frame, text="Drop Columns", command=self.drop_columns)
         self.drop_column_btn.pack_forget()
 
+        self.set_header_btn = tk.Button(self.options_frame, text="Set Header Row", command=self.set_header_row)
+        self.set_header_btn.pack_forget()
+
+        self.delete_row_btn = tk.Button(self.options_frame, text="Delete Selected Rows", command=self.delete_selected_rows)
+        self.delete_row_btn.pack_forget()
+
         self.tree = ttk.Treeview(self.data_frame)
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -87,23 +93,21 @@ class DataCleanerApp:
     def show_data(self):
         if self.data is not None:
             self.tree.delete(*self.tree.get_children())
-            self.tree["columns"] = list(self.data.columns)
+            self.tree["columns"] = ["Row"] + list(self.data.columns)
             self.tree["show"] = "headings"
 
             for column in self.tree["columns"]:
                 self.tree.heading(column, text=column)
                 self.tree.column(column, width=100, anchor=tk.W)
 
-            for _, row in self.data.iterrows():
+            for idx, row in self.data.iterrows():
+                row_values = [idx + 1] + list(row)
                 # Ensure 'Time' column is displayed correctly
                 if 'Time' in self.data.columns:
-                    row_values = list(row)
                     time_val = row['Time']
                     if pd.notna(time_val):
-                        row_values[self.data.columns.get_loc('Time')] = time_val.strftime('%H:%M:%S')
-                    self.tree.insert("", "end", values=row_values)
-                else:
-                    self.tree.insert("", "end", values=list(row))
+                        row_values[self.data.columns.get_loc('Time') + 1] = time_val.strftime('%H:%M:%S')
+                self.tree.insert("", "end", values=row_values)
 
     def show_options(self):
         self.missing_data_btn.pack()
@@ -114,6 +118,8 @@ class DataCleanerApp:
         self.bwd_fill_btn.pack()
         self.export_btn.pack()
         self.drop_column_btn.pack()
+        self.set_header_btn.pack()
+        self.delete_row_btn.pack()
 
     def show_missing_data(self):
         if self.data is not None:
@@ -249,6 +255,35 @@ class DataCleanerApp:
             drop_window.destroy()  # Close the drop columns window after applying changes
         else:
             messagebox.showwarning("Warning", "No data imported")
+
+    def set_header_row(self):
+        if self.data is not None:
+            row_number = simpledialog.askinteger("Set Header Row", "Enter the row number to set as header (1-indexed):")
+            if row_number is not None and row_number > 0:
+                try:
+                    self.data.columns = self.data.iloc[row_number - 1]
+                    self.data = self.data[1:]
+                    self.data.reset_index(drop=True, inplace=True)
+                    self.data.columns.name = None
+                    messagebox.showinfo("Info", "Header row set successfully")
+                    self.show_data()
+                except Exception as e:
+                    messagebox.showerror("Error", f"Error setting header row: {e}")
+            else:
+                messagebox.showwarning("Warning", "Invalid row number")
+        else:
+            messagebox.showwarning("Warning", "No data imported")
+
+    def delete_selected_rows(self):
+        selected_items = self.tree.selection()
+        if selected_items:
+            indices_to_drop = [self.tree.index(item) for item in selected_items]
+            self.data.drop(indices_to_drop, inplace=True)
+            self.data.reset_index(drop=True, inplace=True)
+            self.show_data()
+            messagebox.showinfo("Info", "Selected rows deleted successfully")
+        else:
+            messagebox.showwarning("Warning", "No rows selected to delete")
 
 if __name__ == "__main__":
     root = tk.Tk()
