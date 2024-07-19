@@ -11,47 +11,26 @@ class DataCleanerApp:
 
         self.data = None
 
-        self.main_frame = tk.Frame(root)
-        self.main_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Create a menu bar
+        self.menu = tk.Menu(root)
+        root.config(menu=self.menu)
+        
+        self.file_menu = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="File", menu=self.file_menu)
+        self.file_menu.add_command(label="Import Data", command=self.import_data)
+        self.file_menu.add_command(label="Export Data", command=self.export_data)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Exit", command=root.quit)
 
-        self.data_frame = tk.Frame(root)
-        self.data_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        self.import_btn = tk.Button(self.main_frame, text="Import Data", command=self.import_data)
-        self.import_btn.pack()
+        self.paned_window = tk.PanedWindow(root, orient=tk.HORIZONTAL)
+        self.paned_window.pack(fill=tk.BOTH, expand=True)
 
-        self.options_frame = tk.Frame(self.main_frame)
-        self.options_frame.pack()
+        self.options_frame = tk.LabelFrame(self.paned_window, text="Options", padx=10, pady=10)
+        self.paned_window.add(self.options_frame, minsize=200)  # Minimum size for the options frame
 
-        self.missing_data_btn = tk.Button(self.options_frame, text="Show Missing Data", command=self.show_missing_data)
-        self.missing_data_btn.pack_forget()
-
-        self.datatype_btn = tk.Button(self.options_frame, text="Show Data Types", command=self.show_data_types)
-        self.datatype_btn.pack_forget()
-
-        self.dropna_btn = tk.Button(self.options_frame, text="Drop Missing Data", command=self.dropna)
-        self.dropna_btn.pack_forget()
-
-        self.fill_mean_btn = tk.Button(self.options_frame, text="Fill Missing Data with Mean", command=self.fill_with_mean)
-        self.fill_mean_btn.pack_forget()
-
-        self.fwd_fill_btn = tk.Button(self.options_frame, text="Forward Fill", command=self.forward_fill)
-        self.fwd_fill_btn.pack_forget()
-
-        self.bwd_fill_btn = tk.Button(self.options_frame, text="Backward Fill", command=self.backward_fill)
-        self.bwd_fill_btn.pack_forget()
-
-        self.export_btn = tk.Button(self.options_frame, text="Export Data", command=self.export_data)
-        self.export_btn.pack_forget()
-
-        self.drop_column_btn = tk.Button(self.options_frame, text="Drop Columns", command=self.drop_columns)
-        self.drop_column_btn.pack_forget()
-
-        self.set_header_btn = tk.Button(self.options_frame, text="Set Header Row", command=self.set_header_row)
-        self.set_header_btn.pack_forget()
-
-        self.delete_row_btn = tk.Button(self.options_frame, text="Delete Selected Rows", command=self.delete_selected_rows)
-        self.delete_row_btn.pack_forget()
+        self.data_frame = tk.Frame(self.paned_window)
+        self.paned_window.add(self.data_frame)
 
         self.tree = ttk.Treeview(self.data_frame)
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -64,8 +43,49 @@ class DataCleanerApp:
 
         self.tree.configure(yscrollcommand=self.scroll_y.set, xscrollcommand=self.scroll_x.set)
 
+        # Use ttk style
+        style = ttk.Style()
+        style.theme_use("clam")
+
+        # Configure options frame grid
+        self.options_frame.grid_columnconfigure(0, weight=1)
+        self.options_frame.grid_columnconfigure(1, weight=1)
+
+        # Add buttons in a grid
+        self.missing_data_btn = ttk.Button(self.options_frame, text="Show Missing Data", command=self.show_missing_data)
+        self.missing_data_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+
+        self.datatype_btn = ttk.Button(self.options_frame, text="Show Data Types", command=self.show_data_types)
+        self.datatype_btn.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        self.dropna_btn = ttk.Button(self.options_frame, text="Drop Missing Data", command=self.dropna)
+        self.dropna_btn.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+
+        self.fill_mean_btn = ttk.Button(self.options_frame, text="Fill Missing Data with Mean", command=self.fill_with_mean)
+        self.fill_mean_btn.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+
+        self.fwd_fill_btn = ttk.Button(self.options_frame, text="Forward Fill", command=self.forward_fill)
+        self.fwd_fill_btn.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
+
+        self.bwd_fill_btn = ttk.Button(self.options_frame, text="Backward Fill", command=self.backward_fill)
+        self.bwd_fill_btn.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+
+        self.drop_column_btn = ttk.Button(self.options_frame, text="Drop Columns", command=self.drop_columns)
+        self.drop_column_btn.grid(row=3, column=0, padx=5, pady=5, sticky="ew")
+
+        self.set_header_btn = ttk.Button(self.options_frame, text="Set Header Row", command=self.set_header_row)
+        self.set_header_btn.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
+
+        self.delete_row_btn = ttk.Button(self.options_frame, text="Delete Selected Rows", command=self.delete_selected_rows)
+        self.delete_row_btn.grid(row=4, column=0, padx=5, pady=5, sticky="ew")
+
     def import_data(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx"), ("CSV files", "*.csv"), ("JSON files", "*.json")])
+        file_path = filedialog.askopenfilename(filetypes=[
+            ("All Supported Files", "*.xlsx;*.csv;*.json"),
+            ("Excel files", "*.xlsx"),
+            ("CSV files", "*.csv"),
+            ("JSON files", "*.json")
+        ])
         if file_path:
             if file_path.endswith('.xlsx'):
                 self.data = pd.read_excel(file_path)
@@ -110,16 +130,15 @@ class DataCleanerApp:
                 self.tree.insert("", "end", values=row_values)
 
     def show_options(self):
-        self.missing_data_btn.pack()
-        self.datatype_btn.pack()
-        self.dropna_btn.pack()
-        self.fill_mean_btn.pack()
-        self.fwd_fill_btn.pack()
-        self.bwd_fill_btn.pack()
-        self.export_btn.pack()
-        self.drop_column_btn.pack()
-        self.set_header_btn.pack()
-        self.delete_row_btn.pack()
+        self.missing_data_btn.grid()
+        self.datatype_btn.grid()
+        self.dropna_btn.grid()
+        self.fill_mean_btn.grid()
+        self.fwd_fill_btn.grid()
+        self.bwd_fill_btn.grid()
+        self.drop_column_btn.grid()
+        self.set_header_btn.grid()
+        self.delete_row_btn.grid()
 
     def show_missing_data(self):
         if self.data is not None:
@@ -168,7 +187,7 @@ class DataCleanerApp:
                         elif new_dtype == 'str':
                             self.data[column] = self.data[column].astype(str)
                         elif new_dtype == 'date':
-                            self.data[column] = pd.to_datetime(self.data[column]).dt.date
+                            self.data[column] = pd.to_datetime(self.data[column], errors='coerce').dt.date
                         elif new_dtype == 'time':
                             self.data[column] = pd.to_datetime(self.data[column], format='%H:%M:%S', errors='coerce').dt.time
                         elif new_dtype == 'datetime':
@@ -179,7 +198,7 @@ class DataCleanerApp:
                         messagebox.showerror("Error", f"Error converting column '{column}' to {new_dtype}: {e}")
             self.show_data()
             messagebox.showinfo("Info", "Data type changes applied successfully")
-            dtype_window.destroy()  # Close the data types window after applying changes
+            dtype_window.destroy()
         else:
             messagebox.showwarning("Warning", "No data imported")
 
@@ -217,7 +236,11 @@ class DataCleanerApp:
 
     def export_data(self):
         if self.data is not None:
-            export_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("Excel files", "*.xlsx"), ("CSV files", "*.csv")])
+            export_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[
+                ("All Supported Files", "*.xlsx;*.csv"),
+                ("Excel files", "*.xlsx"),
+                ("CSV files", "*.csv")
+            ])
             if export_path:
                 if export_path.endswith('.xlsx'):
                     self.data.to_excel(export_path, index=False)
@@ -252,7 +275,7 @@ class DataCleanerApp:
                 messagebox.showinfo("Info", "Columns dropped successfully")
             else:
                 messagebox.showwarning("Warning", "No columns selected to drop")
-            drop_window.destroy()  # Close the drop columns window after applying changes
+            drop_window.destroy()
         else:
             messagebox.showwarning("Warning", "No data imported")
 
